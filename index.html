@@ -1,1 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Marketplace</title>
+<style>
+/* ============ DESIGN TOKENS ============
+Color: --ink #1B1E2B (near-black navy text) / --primary #2B3A67 (varsity navy) /
+       --primary-light #4C5E9B / --accent #E8A33D (varsity gold) / --accent-2 #C0392B (sold-red)
+       --surface-light #F6F5F2 / --surface-dark #14161F / --paper #FFFDF8
+Type: Display "Fraunces" (ticket/collegiate serif) for headings, "Inter" for body/UI, "JetBrains Mono" for prices & meta tags
+Signature: listings render as die-cut price tags — a punched circle + dashed perforation, like a real string-tag,
+           rather than generic e-commerce cards.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
+:root{
+  --ink:#1B1E2B;
+  --primary:#2B3A67;
+  --primary-light:#4C5E9B;
+  --accent:#E8A33D;
+  --accent-2:#C0392B;
+  --good:#3E8E5A;
+  --surface:#F6F5F2;
+  --paper:#FFFDF8;
+  --card:#FFFFFF;
+  --border:#E4E1D8;
+  --muted:#71716B;
+  --shadow: 0 1px 2px rgba(27,30,43,.06), 0 8px 24px rgba(27,30,43,.06);
+  --radius:18px;
+}
+[data-theme="dark"]{
+  --ink:#F1EFE6;
+  --primary:#8CA0E0;
+  --primary-light:#B7C4EF;
+  --accent:#F0B860;
+  --surface:#14161F;
+  --paper:#1A1D29;
+  --card:#20232F;
+  --border:#2C2F3D;
+  --muted:#9A9AA5;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--surface);
+  color:var(--ink);
+  transition:background .25s ease, color .25s ease;
+  padding-bottom:60px;
+}
+h1,h2,h3,.brand,.price-big{font-family:'Fraunces',serif;}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+::selection{background:var(--accent); color:#1B1E2B;}
+
+/* ---------- HEADER ---------- */
+header.topbar{
+  position:sticky; top:0; z-index:50;
+  background:var(--paper); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:18px;
+  padding:14px 28px;
+}
+.brand{font-size:22px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent); display:inline-block;}
+.searchbar{
+  flex:1; display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border); border-radius:100px;
+  padding:9px 16px; max-width:560px;
+}
+.searchbar input{border:none; background:none; outline:none; flex:1; font-size:14px; color:var(--ink);}
+.icon-btn{
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--border);
+  background:var(--card); display:flex; align-items:center; justify-content:center; font-size:16px;
+  transition:transform .15s ease, background .15s ease;
+}
+.icon-btn:hover{transform:translateY(-1px); background:var(--surface);}
+nav.mainnav{display:flex; gap:4px; align-items:center;}
+nav.mainnav button.navlink{
+  background:none; border:none; padding:8px 12px; border-radius:100px; font-size:13.5px; font-weight:600; color:var(--muted);
+}
+nav.mainnav button.navlink.active, nav.mainnav button.navlink:hover{background:var(--surface); color:var(--primary);}
+.avatar{
+  width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;
+}
+@media (max-width:920px){ nav.mainnav{display:none;} .searchbar{display:none;} }
+
+/* ---------- LAYOUT ---------- */
+main{max-width:1240px; margin:0 auto; padding:28px;}
+.view{display:none;}
+.view.active{display:block; animation:fade .35s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:linear-gradient(135deg, var(--primary) 0%, #1F2B4D 100%);
+  border-radius:24px; padding:46px 40px; color:#fff; position:relative; overflow:hidden;
+  margin-bottom:34px;
+}
+.hero::after{
+  content:""; position:absolute; right:-60px; top:-60px; width:280px; height:280px; border-radius:50%;
+  background:radial-gradient(circle, rgba(232,163,61,.35), transparent 70%);
+}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:700;}
+.hero h1{font-size:40px; line-height:1.12; margin:10px 0 14px; max-width:640px; font-weight:600;}
+.hero p{color:#D8DCEE; max-width:520px; font-size:15px; margin-bottom:22px;}
+.hero-stats{display:flex; gap:28px; margin-top:26px; position:relative; z-index:1;}
+.hero-stats div{font-family:'JetBrains Mono',monospace;}
+.hero-stats b{font-size:20px; display:block; color:var(--accent);}
+.hero-stats span{font-size:11px; color:#B7BEDB; text-transform:uppercase; letter-spacing:.06em;}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; border:none; border-radius:100px;
+  padding:12px 22px; font-weight:700; font-size:14px; transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover{transform:translateY(-1px);}
+.btn-accent{background:var(--accent); color:#1B1E2B;}
+.btn-outline{background:transparent; border:1.5px solid rgba(255,255,255,.5); color:#fff;}
+.btn-primary{background:var(--primary); color:#fff;}
+.btn-ghost{background:var(--surface); color:var(--primary); border:1px solid var(--border);}
+
+/* ---------- SECTION HEADS ---------- */
+.section-head{display:flex; align-items:baseline; justify-content:space-between; margin:38px 0 16px;}
+.section-head h2{font-size:22px; font-weight:600;}
+.section-head .see-all{font-size:13px; font-weight:700; color:var(--primary);}
+.eyebrow{font-family:'JetBrains Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);}
+
+/* ---------- CATEGORY GRID ---------- */
+.cat-grid{display:grid; grid-template-columns:repeat(9,1fr); gap:12px;}
+@media (max-width:920px){.cat-grid{grid-template-columns:repeat(4,1fr);}}
+.cat-chip{
+  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px 8px;
+  text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition:transform .15s ease, border-color .15s ease;
+}
+.cat-chip:hover{transform:translateY(-3px); border-color:var(--primary-light);}
+.cat-chip .emoji{font-size:22px;}
+.cat-chip span.label{font-size:11.5px; font-weight:600; color:var(--muted);}
+
+/* ---------- PRODUCT GRID / TAG CARD (signature element) ---------- */
+.grid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:760px){.grid{grid-template-columns:repeat(2,1fr);}}
+
+.tag-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); overflow:hidden; cursor:pointer; position:relative;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.tag-card:hover{transform:translateY(-4px); box-shadow:0 4px 6px rgba(27,30,43,.08), 0 18px 34px rgba(27,30,43,.12);}
+.tag-punch{
+  position:absolute; top:14px; left:14px; width:22px; height:22px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--border); z-index:2;
+}
+.tag-media{
+  height:150px; display:flex; align-items:center; justify-content:center; font-size:44px;
+  background:var(--surface); position:relative;
+}
+.tag-fav{
+  position:absolute; top:10px; right:10px; width:32px; height:32px; border-radius:50%; border:none;
+  background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center; font-size:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+[data-theme="dark"] .tag-fav{background:rgba(20,22,31,.85);}
+.tag-fav.active{color:var(--accent-2);}
+.tag-perf{
+  border-top:1.5px dashed var(--border); margin:0 14px;
+}
+.tag-body{padding:12px 16px 16px;}
+.tag-price{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; color:var(--primary);}
+[data-theme="dark"] .tag-price{color:var(--accent);}
+.tag-name{font-size:13.5px; font-weight:600; margin:4px 0 6px; line-height:1.3;}
+.tag-meta{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); flex-wrap:wrap;}
+.pill{
+  background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:2px 8px; font-size:10.5px; font-weight:600;
+}
+.pill.condition-new{color:var(--good); border-color:var(--good);}
+.badge-sold{
+  position:absolute; inset:0; background:rgba(27,30,43,.55); display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:700; font-family:'JetBrains Mono',monospace; letter-spacing:.08em; font-size:13px; z-index:3;
+}
+
+/* ---------- HOW IT WORKS ---------- */
+.steps{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:16px;}
+@media (max-width:760px){.steps{grid-template-columns:1fr 1fr;}}
+.step{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;}
+.step .num{font-family:'JetBrains Mono',monospace; color:var(--accent); font-weight:700; font-size:12px;}
+.step h3{font-size:14.5px; margin:8px 0 4px;}
+.step p{font-size:12.5px; color:var(--muted);}
+
+/* ---------- FILTER + LISTING VIEW ---------- */
+.listing-layout{display:grid; grid-template-columns:230px 1fr; gap:26px;}
+@media (max-width:860px){.listing-layout{grid-template-columns:1fr;}}
+.filters{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; align-self:start; position:sticky; top:80px;}
+.filters h3{font-size:13px; margin-bottom:12px;}
+.filter-group{margin-bottom:18px;}
+.filter-group label{display:block; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:8px;}
+.filter-group select, .filter-group input[type=range]{width:100%; padding:7px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink); font-size:12.5px;}
+.chip-row{display:flex; flex-wrap:wrap; gap:6px;}
+.chip-toggle{padding:5px 10px; border-radius:100px; border:1px solid var(--border); background:var(--surface); font-size:11.5px; font-weight:600;}
+.chip-toggle.active{background:var(--primary); color:#fff; border-color:var(--primary);}
+.results-bar{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+.results-bar select{padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--card); font-size:12.5px;}
+
+/* ---------- PRODUCT DETAIL ---------- */
+.product-detail{display:grid; grid-template-columns:1fr 1fr; gap:36px;}
+@media (max-width:860px){.product-detail{grid-template-columns:1fr;}}
+.gallery-main{
+  height:340px; border-radius:20px; background:var(--card); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:90px; margin-bottom:10px;
+}
+.gallery-thumbs{display:flex; gap:8px;}
+.gallery-thumbs div{width:56px; height:56px; border-radius:10px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer;}
+.pd-price{font-size:34px; font-weight:700; color:var(--primary); font-family:'JetBrains Mono',monospace;}
+[data-theme="dark"] .pd-price{color:var(--accent);}
+.pd-title{font-size:24px; margin:8px 0 10px; font-weight:600;}
+.pd-desc{color:var(--muted); font-size:14px; line-height:1.6; margin:16px 0;}
+.info-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:18px 0; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px;}
+.info-grid div{font-size:12.5px;}
+.info-grid b{display:block; color:var(--muted); font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px;}
+.seller-card{display:flex; gap:12px; align-items:center; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin:16px 0;}
+.seller-card .meta{flex:1;}
+.seller-card .meta b{font-size:13.5px;}
+.seller-card .meta span{font-size:11.5px; color:var(--muted); display:block;}
+.action-row{display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;}
+
+/* ---------- SELL FORM ---------- */
+.form-card{background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; max-width:720px; margin:0 auto;}
+.form-row{margin-bottom:16px;}
+.form-row label{display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:6px;}
+.form-row input, .form-row select, .form-row textarea{
+  width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--ink); font-size:14px; font-family:inherit;
+}
+.form-grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.upload-zone{
+  border:2px dashed var(--border); border-radius:14px; padding:30px; text-align:center; color:var(--muted); font-size:13px; background:var(--surface);
+}
+.cond-row, .deliv-row{display:flex; gap:8px; flex-wrap:wrap;}
+
+/* ---------- CHAT ---------- */
+.chat-layout{display:grid; grid-template-columns:280px 1fr; height:560px; border:1px solid var(--border); border-radius:20px; overflow:hidden; background:var(--card);}
+@media (max-width:760px){.chat-layout{grid-template-columns:1fr;}}
+.thread-list{border-right:1px solid var(--border); overflow-y:auto;}
+.thread{padding:14px 16px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; cursor:pointer;}
+.thread:hover, .thread.active{background:var(--surface);}
+.thread .dot-online{width:9px;height:9px;border-radius:50%;background:var(--good); position:relative; left:26px; top:12px;}
+.thread .tmeta{flex:1; min-width:0;}
+.thread .tmeta b{font-size:13px; display:block;}
+.thread .tmeta span{font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;}
+.chat-window{display:flex; flex-direction:column;}
+.chat-head{padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;}
+.chat-head .meta b{font-size:13.5px; display:block;}
+.chat-head .meta span{font-size:11px; color:var(--good);}
+.chat-body{flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:10px;}
+.msg{max-width:65%; padding:9px 13px; border-radius:16px; font-size:13.5px; line-height:1.4;}
+.msg.them{background:var(--surface); align-self:flex-start; border-bottom-left-radius:4px;}
+.msg.me{background:var(--primary); color:#fff; align-self:flex-end; border-bottom-right-radius:4px;}
+.msg .ts{font-size:9.5px; opacity:.6; margin-top:3px; display:block;}
+.typing{font-size:11.5px; color:var(--muted); padding-left:4px; font-style:italic;}
+.chat-input{display:flex; gap:8px; padding:12px; border-top:1px solid var(--border);}
+.chat-input input{flex:1; padding:10px 14px; border-radius:100px; border:1px solid var(--border); background:var(--surface); color:var(--ink);}
+.send-btn{width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:15px;}
+
+/* ---------- DASHBOARD ---------- */
+.dash-tabs{display:flex; gap:8px; margin-bottom:22px;}
+.dash-tab{padding:9px 18px; border-radius:100px; border:1px solid var(--border); background:var(--card); font-weight:700; font-size:13px;}
+.dash-tab.active{background:var(--primary); color:#fff; border-color:var(--primary);}
+.stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px;}
+@media (max-width:760px){.stat-grid{grid-template-columns:1fr 1fr;}}
+.stat-card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;}
+.stat-card .num{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; color:var(--primary);}
+[data-theme="dark"] .stat-card .num{color:var(--accent);}
+.stat-card .lbl{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-top:4px;}
+.table-card{background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{text-align:left; padding:12px 16px; background:var(--surface); font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);}
+td{padding:12px 16px; border-top:1px solid var(--border);}
+.row-actions button{margin-right:6px; font-size:11.5px; padding:5px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--ink);}
+.status-tag{padding:3px 9px; border-radius:100px; font-size:10.5px; font-weight:700;}
+.status-tag.live{background:rgba(62,142,90,.15); color:var(--good);}
+.status-tag.sold{background:rgba(192,57,43,.15); color:var(--accent-2);}
+
+/* ---------- EMPTY STATE ---------- */
+.empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
+.empty-state .emoji{font-size:40px; margin-bottom:10px;}
+
+footer{max-width:1240px; margin:60px auto 0; padding:20px 28px; color:var(--muted); font-size:12px; text-align:center; border-top:1px solid var(--border);}
+</style>
+</head>
+<body data-theme="light">
+
+<header class="topbar">
+  <div class="brand" onclick="nav('home')"><span class="dot"></span>Campus Marketplace</div>
+  <div class="searchbar">
+    <span>🔍</span>
+    <input id="searchInput" placeholder="Search for textbooks, laptops, bicycles…" onkeydown="if(event.key==='Enter')runSearch()">
+  </div>
+  <nav class="mainnav">
+    <button class="navlink" data-v="home" onclick="nav('home')">Home</button>
+    <button class="navlink" data-v="sell" onclick="nav('sell')">Sell</button>
+    <button class="navlink" data-v="chat" onclick="nav('chat')">Chat</button>
+    <button class="navlink" data-v="wishlist" onclick="nav('wishlist')">Wishlist</button>
+    <button class="navlink" data-v="dashboard" onclick="nav('dashboard')">Dashboard</button>
+    <button class="navlink" data-v="admin" onclick="nav('admin')">Admin</button>
+  </nav>
+  <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  <div class="avatar">RA</div>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="hero-eyebrow">Verified · Students Only</div>
+      <h1>Buy and sell within your own campus.</h1>
+      <p>Textbooks, laptops, cycles and hostel gear — traded only with students verified on your college ID. No strangers, no shipping, just a walk across the quad.</p>
+      <div class="action-row">
+        <button class="btn btn-accent" onclick="nav('sell')">＋ List an item</button>
+        <button class="btn btn-outline" onclick="nav('category')">Browse marketplace</button>
+      </div>
+      <div class="hero-stats">
+        <div><b id="statListings">—</b><span>Active listings</span></div>
+        <div><b>1,842</b><span>Verified students</span></div>
+        <div><b>96%</b><span>Deals closed on-campus</span></div>
+      </div>
+    </div>
+
+    <div class="section-head"><h2>Browse by category</h2></div>
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="section-head"><h2>Featured this week</h2><span class="see-all" onclick="nav('category')">See all →</span></div>
+    <div class="grid" id="featuredGrid"></div>
+
+    <div class="section-head"><h2>Latest listings</h2><span class="see-all" onclick="nav('category')">See all →</span></div>
+    <div class="grid" id="latestGrid"></div>
+
+    <div class="section-head"><h2>How it works</h2></div>
+    <div class="steps">
+      <div class="step"><div class="num">01</div><h3>Verify your college ID</h3><p>One-time check so only real students on your campus get in.</p></div>
+      <div class="step"><div class="num">02</div><h3>List or browse</h3><p>Post what you're selling, or filter by hostel, year and price.</p></div>
+      <div class="step"><div class="num">03</div><h3>Chat it out</h3><p>Message the seller directly, ask questions, agree a price.</p></div>
+      <div class="step"><div class="num">04</div><h3>Meet on campus</h3><p>Hand it over at the hostel gate or a spot you both pick.</p></div>
+    </div>
+  </section>
+
+  <!-- CATEGORY / SEARCH RESULTS -->
+  <section class="view" id="view-category">
+    <div class="section-head" style="margin-top:0"><h2 id="catTitle">All listings</h2></div>
+    <div class="listing-layout">
+      <aside class="filters">
+        <h3>Filters</h3>
+        <div class="filter-group">
+          <label>Category</label>
+          <select id="fCategory" onchange="applyFilters()"><option value="">All categories</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Condition</label>
+          <div class="chip-row" id="fCondition"></div>
+        </div>
+        <div class="filter-group">
+          <label>Student year</label>
+          <div class="chip-row" id="fYear"></div>
+        </div>
+        <div class="filter-group">
+          <label>Max price: ₹<span id="priceVal">50000</span></label>
+          <input type="range" id="fPrice" min="0" max="50000" step="500" value="50000" oninput="document.getElementById('priceVal').textContent=this.value; applyFilters()">
+        </div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="clearFilters()">Clear filters</button>
+      </aside>
+      <div>
+        <div class="results-bar">
+          <span class="eyebrow" id="resultCount">0 results</span>
+          <select id="sortSel" onchange="applyFilters()">
+            <option value="recent">Recently added</option>
+            <option value="views">Most viewed</option>
+            <option value="low">Price: Low to High</option>
+            <option value="high">Price: High to Low</option>
+          </select>
+        </div>
+        <div class="grid" id="resultsGrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT DETAIL -->
+  <section class="view" id="view-product">
+    <button class="btn btn-ghost" onclick="nav('category')" style="margin-bottom:20px">← Back to listings</button>
+    <div class="product-detail" id="productDetail"></div>
+  </section>
+
+  <!-- SELL -->
+  <section class="view" id="view-sell">
+    <div class="section-head" style="margin-top:0"><h2>List an item</h2></div>
+    <div class="form-card">
+      <div class="upload-zone">📷 Drag & drop up to 10 photos, or click to upload<br><small>JPG/PNG · 5MB max each</small></div>
+      <br>
+      <div class="form-row"><label>Product name</label><input placeholder="e.g. Casio FX-991ES Calculator"></div>
+      <div class="form-row"><label>Description</label><textarea rows="4" placeholder="Condition, reason for selling, any accessories included…"></textarea></div>
+      <div class="form-grid2">
+        <div class="form-row"><label>Price (₹)</label><input type="number" placeholder="1200"></div>
+        <div class="form-row"><label>Category</label><select id="sellCategory"></select></div>
+      </div>
+      <div class="form-row">
+        <label>Condition</label>
+        <div class="cond-row">
+          <button type="button" class="chip-toggle active">New</button>
+          <button type="button" class="chip-toggle">Like New</button>
+          <button type="button" class="chip-toggle">Good</button>
+          <button type="button" class="chip-toggle">Fair</button>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-row"><label>Hostel name</label><input placeholder="e.g. Ganga Hostel"></div>
+        <div class="form-row"><label>Room number</label><input placeholder="e.g. B-204"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-row"><label>Student year</label><select><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div>
+        <div class="form-row"><label>Branch</label><input placeholder="e.g. Computer Science"></div>
+      </div>
+      <div class="form-row">
+        <label>Delivery method</label>
+        <div class="deliv-row">
+          <button type="button" class="chip-toggle active">Meet in Hostel</button>
+          <button type="button" class="chip-toggle">Meet on Campus</button>
+          <button type="button" class="chip-toggle">Pickup Only</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Negotiable</label>
+        <div class="chip-row"><button type="button" class="chip-toggle active">Yes</button><button type="button" class="chip-toggle">No</button></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center; padding:14px" onclick="mockPublish()">Publish listing</button>
+    </div>
+  </section>
+
+  <!-- WISHLIST -->
+  <section class="view" id="view-wishlist">
+    <div class="section-head" style="margin-top:0"><h2>Your wishlist</h2></div>
+    <div class="grid" id="wishlistGrid"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section class="view" id="view-chat">
+    <div class="section-head" style="margin-top:0"><h2>Messages</h2></div>
+    <div class="chat-layout">
+      <div class="thread-list" id="threadList"></div>
+      <div class="chat-window" id="chatWindow"></div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="view" id="view-dashboard">
+    <div class="section-head" style="margin-top:0"><h2>Dashboard</h2></div>
+    <div class="dash-tabs">
+      <button class="dash-tab active" id="tab-seller" onclick="dashTab('seller')">Seller</button>
+      <button class="dash-tab" id="tab-buyer" onclick="dashTab('buyer')">Buyer</button>
+    </div>
+    <div id="dashSeller"></div>
+    <div id="dashBuyer" style="display:none"></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="view" id="view-admin">
+    <div class="section-head" style="margin-top:0"><h2>Admin panel</h2></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">312</div><div class="lbl">Pending verifications</div></div>
+      <div class="stat-card"><div class="num">1,842</div><div class="lbl">Verified students</div></div>
+      <div class="stat-card"><div class="num">27</div><div class="lbl">Open reports</div></div>
+      <div class="stat-card"><div class="num" id="adminListingCount">—</div><div class="lbl">Live listings</div></div>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Listing</th><th>Seller</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="adminTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>Campus Marketplace — a visual prototype. All names, students and messages shown are sample data.</footer>
+
+<script>
+/* ================= MOCK DATA ================= */
+const categories = [
+  {k:"Books", e:"📚"}, {k:"Notes", e:"📝"}, {k:"Calculator", e:"🖩"}, {k:"Laptop", e:"💻"},
+  {k:"Desktop", e:"🖥️"}, {k:"Mobile Phone", e:"📱"}, {k:"Tablet", e:"📲"}, {k:"Smart Watch", e:"⌚"},
+  {k:"Headphones", e:"🎧"}, {k:"Printer", e:"🖨️"}, {k:"Bicycle", e:"🚲"}, {k:"Hostel Furniture", e:"🛏️"},
+  {k:"Clothes", e:"👕"}, {k:"Electronics", e:"🔌"}, {k:"Gaming", e:"🎮"}, {k:"Accessories", e:"🎒"}, {k:"Other", e:"📦"}
+];
+
+const names = ["Aarav Mehta","Priya Nair","Kunal Shah","Sara Iyer","Rohan Das","Meera Kapoor","Ishaan Rao","Diya Verma","Vikram Sen","Ananya Joshi"];
+const hostels = ["Ganga Hostel","Yamuna Hostel","Saraswati Hostel","Nilgiri Block","Aravalli Block"];
+const branches = ["Computer Science","Mechanical","Electronics","Civil","Economics","Design"];
+const years = ["1st Year","2nd Year","3rd Year","4th Year"];
+const conditions = ["New","Like New","Good","Fair"];
+
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+const productNames = {
+  "Books":["Data Structures Textbook (5th Ed)","Organic Chemistry Vol. 2","Intro to Economics","Engineering Mathematics Set"],
+  "Notes":["Handwritten DBMS Notes","Semester 4 Physics Notes","GATE CS Notes Bundle"],
+  "Calculator":["Casio FX-991ES Plus","Texas Instruments TI-84"],
+  "Laptop":["Dell Inspiron 15 (i5, 8GB)","HP Pavilion Ryzen 5","MacBook Air M1 2020","Lenovo ThinkPad E14"],
+  "Desktop":["Custom Gaming PC – GTX 1660","HP Prebuilt Desktop"],
+  "Mobile Phone":["iPhone 12, 128GB","Samsung Galaxy M34","OnePlus Nord CE 3"],
+  "Tablet":["iPad 9th Gen 64GB","Samsung Galaxy Tab A8"],
+  "Smart Watch":["Noise ColorFit Pro 4","Apple Watch SE"],
+  "Headphones":["Sony WH-CH510","boAt Rockerz 450"],
+  "Printer":["Canon Pixma Inkjet Printer","HP LaserJet Compact"],
+  "Bicycle":["Hero Sprint Geared Cycle","Firefox Mountain Bike"],
+  "Hostel Furniture":["Study Table + Chair Set","Foldable Mattress","Steel Almirah"],
+  "Clothes":["Winter Hoodie Bundle (M)","Formal Shirt Set"],
+  "Electronics":["Extension Board 6-socket","Table Lamp with USB"],
+  "Gaming":["PS4 Slim 500GB + 2 Controllers","Nintendo Switch Lite"],
+  "Accessories":["Laptop Backpack","Desk Organizer Set"],
+  "Other":["Guitar – Acoustic 38 inch","Badminton Racquet Pair"]
+};
+
+let products = [];
+let idCounter = 1;
+categories.forEach(c=>{
+  (productNames[c.k]||["Item"]).forEach(n=>{
+    products.push({
+      id: idCounter++,
+      name:n, category:c.k, emoji:c.e,
+      price: rnd(3,c.k==="Laptop"||c.k==="Desktop"||c.k==="Mobile Phone"?450:60, c.k==="Laptop"||c.k==="Desktop"?45000: c.k==="Mobile Phone"||c.k==="Tablet"?30000: c.k==="Bicycle"?6000: c.k==="Books"||c.k==="Notes"?900:5000)*10,
+      condition: rand(conditions),
+      seller: rand(names), hostel: rand(hostels), branch: rand(branches), year: rand(years),
+      views: rnd(8,340), posted: rnd(1,21), negotiable: Math.random()>0.4,
+      delivery: rand(["Meet in Hostel","Meet on Campus","Pickup Only"]),
+      sold: Math.random()>0.9,
+      desc: "Selling because I no longer need it — barely used, kept in great condition. Happy to answer any questions before you decide, and open to a fair offer.",
+      fav:false
+    });
+  });
+});
+let wishlist = new Set();
+
+/* ================= NAVIGATION ================= */
+function nav(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.navlink').forEach(el=>el.classList.toggle('active', el.dataset.v===v));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(v==='wishlist') renderWishlist();
+  if(v==='chat') renderChat();
+  if(v==='dashboard') renderDashboard();
+  if(v==='admin') renderAdmin();
+}
+
+function toggleTheme(){
+  const body=document.body;
+  const dark = body.getAttribute('data-theme')==='dark';
+  body.setAttribute('data-theme', dark?'light':'dark');
+  document.getElementById('themeBtn').textContent = dark?'🌙':'☀️';
+}
+
+/* ================= CARD RENDERING ================= */
+function tagCard(p){
+  return `<div class="tag-card" onclick="openProduct(${p.id})">
+    <div class="tag-punch"></div>
+    ${p.sold?'<div class="badge-sold">SOLD</div>':''}
+    <div class="tag-media">${p.emoji}
+      <button class="tag-fav ${wishlist.has(p.id)?'active':''}" onclick="event.stopPropagation(); toggleFav(${p.id})">${wishlist.has(p.id)?'♥':'♡'}</button>
+    </div>
+    <div class="tag-perf"></div>
+    <div class="tag-body">
+      <div class="tag-price">₹${p.price.toLocaleString('en-IN')}</div>
+      <div class="tag-name">${p.name}</div>
+      <div class="tag-meta">
+        <span class="pill ${p.condition==='New'?'condition-new':''}">${p.condition}</span>
+        <span>${p.hostel}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleFav(id){
+  if(wishlist.has(id)) wishlist.delete(id); else wishlist.add(id);
+  refreshAllGrids();
+}
+function refreshAllGrids(){
+  renderHome(); if(document.getElementById('view-category').classList.contains('active')) applyFilters();
+  if(document.getElementById('view-wishlist').classList.contains('active')) renderWishlist();
+}
+
+/* ================= HOME ================= */
+function renderHome(){
+  document.getElementById('statListings').textContent = products.filter(p=>!p.sold).length;
+  const catGrid = document.getElementById('catGrid');
+  catGrid.innerHTML = categories.map(c=>`<div class="cat-chip" onclick="filterByCategory('${c.k}')"><span class="emoji">${c.e}</span><span class="label">${c.k}</span></div>`).join('');
+  const featured = [...products].filter(p=>!p.sold).sort((a,b)=>b.views-a.views).slice(0,4);
+  document.getElementById('featuredGrid').innerHTML = featured.map(tagCard).join('');
+  const latest = [...products].filter(p=>!p.sold).sort((a,b)=>a.posted-b.posted).slice(0,4);
+  document.getElementById('latestGrid').innerHTML = latest.map(tagCard).join('');
+}
+
+/* ================= CATEGORY / FILTER VIEW ================= */
+let activeCategory = "";
+function populateFilterOptions(){
+  const sel = document.getElementById('fCategory');
+  sel.innerHTML = '<option value="">All categories</option>' + categories.map(c=>`<option value="${c.k}">${c.k}</option>`).join('');
+  document.getElementById('sellCategory').innerHTML = categories.map(c=>`<option value="${c.k}">${c.k}</option>`).join('');
+  document.getElementById('fCondition').innerHTML = conditions.map(c=>`<button class="chip-toggle" data-c="${c}" onclick="toggleChip(this)">${c}</button>`).join('');
+  document.getElementById('fYear').innerHTML = years.map(y=>`<button class="chip-toggle" data-y="${y}" onclick="toggleChip(this)">${y}</button>`).join('');
+}
+function toggleChip(el){ el.classList.toggle('active'); applyFilters(); }
+
+function filterByCategory(cat){
+  activeCategory = cat;
+  nav('category');
+  document.getElementById('fCategory').value = cat;
+  applyFilters();
+}
+
+function runSearch(){
+  const q = document.getElementById('searchInput').value.trim();
+  activeCategory = "";
+  nav('category');
+  document.getElementById('fCategory').value = "";
+  applyFilters(q);
+}
+
+function clearFilters(){
+  document.getElementById('fCategory').value="";
+  document.querySelectorAll('#fCondition .chip-toggle, #fYear .chip-toggle').forEach(c=>c.classList.remove('active'));
+  document.getElementById('fPrice').value = 50000;
+  document.getElementById('priceVal').textContent = 50000;
+  document.getElementById('searchInput').value = "";
+  applyFilters();
+}
+
+function applyFilters(searchOverride){
+  const q = (searchOverride!==undefined? searchOverride : document.getElementById('searchInput').value).toLowerCase();
+  const cat = document.getElementById('fCategory').value;
+  const maxPrice = Number(document.getElementById('fPrice').value);
+  const condSel = [...document.querySelectorAll('#fCondition .chip-toggle.active')].map(c=>c.dataset.c);
+  const yearSel = [...document.querySelectorAll('#fYear .chip-toggle.active')].map(c=>c.dataset.y);
+  const sort = document.getElementById('sortSel').value;
+
+  let out = products.filter(p=>!p.sold);
+  if(cat) out = out.filter(p=>p.category===cat);
+  if(q) out = out.filter(p=>p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+  if(maxPrice<50000) out = out.filter(p=>p.price<=maxPrice);
+  if(condSel.length) out = out.filter(p=>condSel.includes(p.condition));
+  if(yearSel.length) out = out.filter(p=>yearSel.includes(p.year));
+
+  if(sort==='views') out.sort((a,b)=>b.views-a.views);
+  else if(sort==='low') out.sort((a,b)=>a.price-b.price);
+  else if(sort==='high') out.sort((a,b)=>b.price-a.price);
+  else out.sort((a,b)=>a.posted-b.posted);
+
+  document.getElementById('catTitle').textContent = cat || (q? `Results for "${q}"` : "All listings");
+  document.getElementById('resultCount').textContent = out.length + " results";
+  document.getElementById('resultsGrid').innerHTML = out.length? out.map(tagCard).join('') : `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🔍</div>No listings match those filters yet.<br>Try widening your search.</div>`;
+}
+
+/* ================= PRODUCT DETAIL ================= */
+function openProduct(id){
+  const p = products.find(x=>x.id===id);
+  const initials = p.seller.split(' ').map(w=>w[0]).join('');
+  document.getElementById('productDetail').innerHTML = `
+    <div>
+      <div class="gallery-main">${p.emoji}</div>
+      <div class="gallery-thumbs">${[p.emoji,p.emoji,p.emoji].map(e=>`<div>${e}</div>`).join('')}</div>
+    </div>
+    <div>
+      <span class="eyebrow">${p.category} · Posted ${p.posted}d ago · ${p.views} views</span>
+      <div class="pd-title">${p.name}</div>
+      <div class="pd-price">₹${p.price.toLocaleString('en-IN')} <span style="font-size:13px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:600">${p.negotiable?'· negotiable':'· fixed price'}</span></div>
+      <div class="pd-desc">${p.desc}</div>
+      <div class="info-grid">
+        <div><b>Condition</b>${p.condition}</div>
+        <div><b>Delivery</b>${p.delivery}</div>
+        <div><b>Hostel</b>${p.hostel}</div>
+        <div><b>Branch</b>${p.branch}</div>
+        <div><b>Student year</b>${p.year}</div>
+        <div><b>Category</b>${p.category}</div>
+      </div>
+      <div class="seller-card">
+        <div class="avatar">${initials}</div>
+        <div class="meta"><b>${p.seller} <span style="color:var(--good);font-size:11px">✓ Verified</span></b><span>${p.hostel} · ${p.branch}, ${p.year}</span></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="nav('chat')">💬 Chat with seller</button>
+        <button class="icon-btn" onclick="toggleFav(${p.id}); openProduct(${p.id})">${wishlist.has(p.id)?'♥':'♡'}</button>
+        <button class="icon-btn">🔗</button>
+        <button class="icon-btn" title="Report listing">⚑</button>
+      </div>
+    </div>
+  `;
+  nav('product');
+}
+
+/* ================= WISHLIST ================= */
+function renderWishlist(){
+  const items = products.filter(p=>wishlist.has(p.id));
+  document.getElementById('wishlistGrid').innerHTML = items.length? items.map(tagCard).join('') : `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">♡</div>Nothing saved yet.<br>Tap the heart on any listing to keep track of it here.</div>`;
+}
+
+/* ================= CHAT ================= */
+const threads = [
+  {id:1, name:"Priya Nair", item:"Dell Inspiron 15 (i5, 8GB)", online:true, unread:2},
+  {id:2, name:"Kunal Shah", item:"Casio FX-991ES Plus", online:false, unread:0},
+  {id:3, name:"Sara Iyer", item:"Hero Sprint Geared Cycle", online:true, unread:0},
+];
+const chatLogs = {
+  1:[{from:'them',text:"Hey! Is the laptop still available?",t:"10:02 AM"},
+     {from:'me',text:"Yes it is! Charger included too.",t:"10:04 AM"},
+     {from:'them',text:"Perfect, can we meet at Ganga Hostel gate tomorrow evening?",t:"10:05 AM"}],
+  2:[{from:'them',text:"Would you take ₹450 for the calculator?",t:"Yesterday"},
+     {from:'me',text:"I can do ₹480, it's barely used.",t:"Yesterday"}],
+  3:[{from:'me',text:"Hi, does the cycle come with a lock?",t:"Mon"},
+     {from:'them',text:"Yes, U-lock included in the price.",t:"Mon"}]
+};
+let activeThread = 1;
+function renderChat(){
+  document.getElementById('threadList').innerHTML = threads.map(t=>`
+    <div class="thread ${t.id===activeThread?'active':''}" onclick="openThread(${t.id})">
+      <div class="avatar">${t.name.split(' ').map(w=>w[0]).join('')}</div>
+      <div class="tmeta"><b>${t.name} ${t.unread?`<span class="pill" style="background:var(--accent);border:none;color:#1B1E2B">${t.unread}</span>`:''}</b><span>${t.item}</span></div>
+      ${t.online?'<div class="dot-online" style="left:0;top:0"></div>':''}
+    </div>`).join('');
+  openThread(activeThread);
+}
+function openThread(id){
+  activeThread = id;
+  const t = threads.find(x=>x.id===id);
+  const log = chatLogs[id];
+  document.getElementById('chatWindow').innerHTML = `
+    <div class="chat-head">
+      <div class="avatar">${t.name.split(' ').map(w=>w[0]).join('')}</div>
+      <div class="meta"><b>${t.name}</b><span>${t.online?'Online now':'Offline'} · re: ${t.item}</span></div>
+    </div>
+    <div class="chat-body" id="chatBody">
+      ${log.map(m=>`<div class="msg ${m.from==='me'?'me':'them'}">${m.text}<span class="ts">${m.t}</span></div>`).join('')}
+      <div class="typing" id="typingHint" style="display:none">${t.name.split(' ')[0]} is typing…</div>
+    </div>
+    <div class="chat-input">
+      <button class="icon-btn">😊</button>
+      <button class="icon-btn">📎</button>
+      <input id="chatMsgInput" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="send-btn" onclick="sendMsg()">➤</button>
+    </div>`;
+  document.querySelectorAll('.thread').forEach(el=>el.classList.remove('active'));
+  renderChat.call && null;
+  const body = document.getElementById('chatBody'); body.scrollTop = body.scrollHeight;
+}
+function sendMsg(){
+  const input = document.getElementById('chatMsgInput');
+  const text = input.value.trim();
+  if(!text) return;
+  chatLogs[activeThread].push({from:'me', text, t:'Now'});
+  input.value='';
+  const body = document.getElementById('chatBody');
+  body.insertAdjacentHTML('beforeend', `<div class="msg me">${text}<span class="ts">Now</span></div>`);
+  body.scrollTop = body.scrollHeight;
+  const hint = document.getElementById('typingHint');
+  hint.style.display='block'; body.appendChild(hint); body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{
+    hint.style.display='none';
+    const reply = "Sounds good, let's finalize that!";
+    chatLogs[activeThread].push({from:'them', text:reply, t:'Now'});
+    body.insertAdjacentHTML('beforeend', `<div class="msg them">${reply}<span class="ts">Now</span></div>`);
+    body.appendChild(hint);
+    body.scrollTop = body.scrollHeight;
+  }, 1400);
+}
+
+/* ================= DASHBOARD ================= */
+function dashTab(t){
+  document.getElementById('tab-seller').classList.toggle('active', t==='seller');
+  document.getElementById('tab-buyer').classList.toggle('active', t==='buyer');
+  document.getElementById('dashSeller').style.display = t==='seller'?'block':'none';
+  document.getElementById('dashBuyer').style.display = t==='buyer'?'block':'none';
+}
+function renderDashboard(){
+  const mine = products.slice(0,6);
+  document.getElementById('dashSeller').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">${mine.length}</div><div class="lbl">Active listings</div></div>
+      <div class="stat-card"><div class="num">${mine.reduce((s,p)=>s+p.views,0)}</div><div class="lbl">Total views</div></div>
+      <div class="stat-card"><div class="num">14</div><div class="lbl">Chat requests</div></div>
+      <div class="stat-card"><div class="num">3</div><div class="lbl">Items sold</div></div>
+    </div>
+    <div class="table-card">
+      <table><thead><tr><th>Listing</th><th>Price</th><th>Views</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${mine.map(p=>`
+        <tr><td>${p.emoji} ${p.name}</td><td class="mono">₹${p.price.toLocaleString('en-IN')}</td><td>${p.views}</td>
+        <td><span class="status-tag ${p.sold?'sold':'live'}">${p.sold?'Sold':'Live'}</span></td>
+        <td class="row-actions"><button>Edit</button><button>Mark Sold</button><button>Renew</button><button>Delete</button></td></tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  const savedSearches = ["Laptop under ₹30,000","Bicycle · Ganga Hostel","Calculator"];
+  const recent = products.slice(6,10);
+  document.getElementById('dashBuyer').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">${wishlist.size}</div><div class="lbl">Wishlist items</div></div>
+      <div class="stat-card"><div class="num">2</div><div class="lbl">Purchases made</div></div>
+      <div class="stat-card"><div class="num">${threads.length}</div><div class="lbl">Chat threads</div></div>
+      <div class="stat-card"><div class="num">${savedSearches.length}</div><div class="lbl">Saved searches</div></div>
+    </div>
+    <div class="section-head" style="margin-top:0"><h2 style="font-size:16px">Recently viewed</h2></div>
+    <div class="grid">${recent.map(tagCard).join('')}</div>
+    <div class="section-head"><h2 style="font-size:16px">Saved searches</h2></div>
+    <div class="chip-row">${savedSearches.map(s=>`<span class="pill" style="padding:8px 14px;font-size:12.5px">${s}</span>`).join('')}</div>`;
+}
+
+/* ================= ADMIN ================= */
+function renderAdmin(){
+  document.getElementById('adminListingCount').textContent = products.filter(p=>!p.sold).length;
+  const sample = products.slice(0,8);
+  document.getElementById('adminTable').innerHTML = sample.map(p=>`
+    <tr><td>${p.emoji} ${p.name}</td><td>${p.seller}</td><td>${p.category}</td>
+    <td><span class="status-tag ${p.sold?'sold':'live'}">${p.sold?'Sold':'Live'}</span></td>
+    <td class="row-actions"><button>Approve</button><button>Remove</button></td></tr>`).join('');
+}
+
+/* ================= SELL MOCK ================= */
+function mockPublish(){
+  alert("✓ Listing published (prototype only — no backend connected).\nIn the full build this would save to the database and appear instantly in Latest Listings.");
+  nav('home');
+}
+
+/* ================= INIT ================= */
+populateFilterOptions();
+renderHome();
+</script>
+</body>
+</html>
